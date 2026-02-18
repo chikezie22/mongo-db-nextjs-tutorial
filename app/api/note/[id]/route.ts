@@ -37,3 +37,63 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     );
   }
 }
+
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    await connectDb();
+    const { id } = await params;
+    const body = await request.json();
+    if (!body) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Body cannot be empty',
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+    const note = await Note.findByIdAndUpdate(
+      id,
+      {
+        ...body,
+        updatedAt: new Date(),
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+    if (!note)
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Note not founc',
+        },
+        { status: 404 },
+      );
+    return NextResponse.json(
+      {
+        success: true,
+        message: 'Successfully updated',
+        data: note,
+      },
+      {
+        status: 203,
+      },
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error ? `Internal server error ${error?.message}` : 'Internal Server error';
+    return NextResponse.json(
+      {
+        success: false,
+        message,
+      },
+      {
+        status: 500,
+      },
+    );
+  }
+}
